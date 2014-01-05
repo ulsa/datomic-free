@@ -4,7 +4,8 @@
             [me.raynes.fs.compression :refer [unzip]]
             [clj-http.client :as client]
             [clojure.java.io :refer [copy file]]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [clojure.tools.cli :refer [parse-opts]])
   (:import [java.nio.file Files Paths])
   (:gen-class))
 
@@ -55,7 +56,41 @@
   (fs/delete *active-path*)
   (symlink (str *versions-path* "/datomic-free-" version) *active-path*))
 
+(def cli-options
+  [["-h" "--help" "Show help" :default false :flag true]])
+
+(defn usage [options-summary]
+  (->> ["Utility for downloading, upgrading and starting Datomic Free."
+        ""
+        "Usage: lein run -- [options] [start|update|use]"
+        "Usage: java -jar datomic-free-<version>-standalone.jar [options] [start|update|use]"
+        ""
+        "Options:"
+        options-summary
+        ""
+        "Please refer to the README.md for more information."]
+       (string/join \newline)))
+
+(defn error-msg [errors]
+  (str "The following errors occurred while parsing your command:\n\n"
+       (string/join \newline errors)))
+
+(defn exit [status msg]
+  (println msg)
+  (System/exit status))
+
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (println (get-latest-datomic-version)))
+  (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
+    ;; Handle help and error conditions
+    (cond
+     (:help options) (exit 0 (usage summary))
+     (not= (count arguments) 1) (exit 1 (usage summary))
+     errors (exit 1 (error-msg errors)))
+    ;; Execute program with options
+    (case (first arguments)
+      "start" (println "start" options)
+      "update" (println "update" options)
+      "use" (println "use" options)
+      (exit 1 (usage summary)))))

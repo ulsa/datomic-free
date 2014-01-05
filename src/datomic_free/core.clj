@@ -3,7 +3,8 @@
             [me.raynes.fs :as fs]
             [me.raynes.fs.compression :refer [unzip]]
             [clj-http.client :as client]
-            [clojure.java.io :refer [copy file]])
+            [clojure.java.io :refer [copy file]]
+            [clojure.string :as string])
   (:import [java.nio.file Files Paths])
   (:gen-class))
 
@@ -18,7 +19,7 @@
   (html/html-resource (java.net.URI. (str *base-url* "/downloads/free"))))
 
 (defn get-latest-datomic-version []
-  (str *base-url* (-> (fetch-url) (html/select [:a.latest]) first :attrs :href)))
+  (-> (fetch-url) (html/select [:a.latest]) first :attrs :href (string/split #"/") last))
 
 (defn download-datomic [version]
   (let [path (str *versions-path* "/datomic-free-" version)]
@@ -37,6 +38,13 @@
                 (unzip zip-file ".")
                 (fs/delete zip-file)))
             (println version "is not a valid version. See https://my.datomic.com/downloads/free for a list of versions.")))))))
+
+(defn download-latest-datomic []
+  (println "Finding latest datomic version...")
+  (let [version (get-latest-datomic-version)]
+    (if (string/blank? version)
+      (println "The latest version could not be found. Install a specific version with \"datomic-free update VERSION\".")
+      (download-datomic version))))
 
 (defn symlink [link target]
   (let [link-path (Paths/get link)

@@ -156,7 +156,9 @@
           (fs/mkdirs *home-path*)
           (download-latest-datomic))
         ;; TODO: add support for specific config
-        (start-transactor))
+        (if-let [config (second arguments)]
+          (start-transactor config)
+          (start-transactor)))
       "update"
       (if-let [version (second arguments)]
         (download-datomic version)

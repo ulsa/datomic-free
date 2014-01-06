@@ -29,18 +29,8 @@
 (defn path-for-version [version]
   (str *versions-path* "/datomic-free-" version))
 
-(defn- to-path [p]
-  (if (instance? Path p)
-    p
-    (Paths/get p (into-array String []))))
-
-(defn- symlink [link target]
-  (Files/createSymbolicLink (to-path link)
-                            (to-path target)
-                            (into-array FileAttribute [])))
-
-(defn- symlink-target [link]
-  (-> link (to-path) (Files/readSymbolicLink)))
+(defn- sym-link-target [link]
+  (-> link (fs/file) (.toPath) (Files/readSymbolicLink)))
 
 (defn- copy-stream-to-file [stream zip-file]
   (with-open [i stream]
@@ -76,11 +66,11 @@
     (when (fs/exists? version-data-path)
       (fs/delete-dir version-data-path))
     (fs/mkdirs *data-path*)
-    (symlink version-data-path *data-path*)))
+    (fs/sym-link version-data-path *data-path*)))
 
 (defn- update-active-link [version]
   (fs/delete *active-path*)
-  (symlink *active-path* (path-for-version version)))
+  (fs/sym-link *active-path* (path-for-version version)))
 
 (defn use-datomic [version]
   (update-active-link version)

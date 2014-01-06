@@ -71,16 +71,21 @@
     (catch IOException e
       (println "No 'mvn' command available, skipping install in local maven repository"))))
 
-(defn use-datomic [version]
-  (fs/delete *active-path*)
-  (symlink *active-path* (path-for-version version)))
-
-(defn update-data-dir [version]
+(defn- update-data-dir [version]
   (let [version-data-path (str (path-for-version version) "/data")]
     (when (fs/exists? version-data-path)
       (fs/delete-dir version-data-path))
     (fs/mkdirs *data-path*)
     (symlink version-data-path *data-path*)))
+
+(defn- update-active-link [version]
+  (fs/delete *active-path*)
+  (symlink *active-path* (path-for-version version)))
+
+(defn use-datomic [version]
+  (update-active-link version)
+  (update-data-dir version)
+  (println (format "Done. Datomic Free %s is now available." version)))
 
 (defn download-datomic [version]
   (let [path (path-for-version version)]
@@ -98,9 +103,7 @@
               (unzip-and-delete zip-file)
               (make-transactor-executable version)
               (install-maven-artifacts version)
-              (use-datomic version)
-              (update-data-dir version)
-              (println (format "Done. Datomic Free %s is now available." version)))
+              (use-datomic version))
             (println version "is not a valid version. See https://my.datomic.com/downloads/free for a list of versions.")))))))
 
 (defn download-latest-datomic []

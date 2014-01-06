@@ -127,9 +127,9 @@
         ""
         "where 'arg' depends on the command:"
         ""
-        " - start [config]"
-        " - update [version]"
-        " - use [version]"
+        " - start [config]       (default: config/samples/free-transactor-template.properties)"
+        " - update [version]     (default: latest version)"
+        " - use [version]        (default: latest version)"
         ""
         "Options:"
         options-summary

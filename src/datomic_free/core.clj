@@ -109,8 +109,9 @@
 (defn start-transactor
   ([] (start-transactor (str *active-path* "/config/samples/free-transactor-template.properties")))
   ([config]
-   (let [executable (str *active-path* "/bin/transactor")]
-     (sh executable config))))
+     (println "Starting Datomic Free, active version is" (-> *active-path* sym-link-target str))
+     (let [executable (str *active-path* "/bin/transactor")]
+       (sh executable config))))
 
 (def cli-options
   [["-h" "--help" "Show help" :default false :flag true]])

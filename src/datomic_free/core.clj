@@ -6,7 +6,8 @@
             [clojure.java.io :refer [copy file]]
             [clojure.string :as string]
             [clojure.tools.cli :refer [parse-opts]])
-  (:import [java.nio.file Files Paths])
+  (:import [java.nio.file Files Paths Path]
+           [java.nio.file.attribute FileAttribute])
   (:gen-class))
 
 (def ^:dynamic *base-url* "https://my.datomic.com")
@@ -47,14 +48,22 @@
       (println "The latest version could not be found. Install a specific version with \"datomic-free update VERSION\".")
       (download-datomic version))))
 
+(defn to-path [p]
+  (if (instance? Path p)
+    p
+    (Paths/get p (into-array String []))))
+
 (defn symlink [link target]
-  (let [link-path (Paths/get link)
-        target-path (Paths/get target)]
-      (Files/createSymbolicLink link target nil)))
+  (Files/createSymbolicLink (to-path link)
+                            (to-path target)
+                            (into-array FileAttribute [])))
+
+(defn symlink-target [link]
+  (-> link (to-path) (Files/readSymbolicLink)))
 
 (defn use-datomic [version]
   (fs/delete *active-path*)
-  (symlink (str *versions-path* "/datomic-free-" version) *active-path*))
+  (symlink *active-path* (str *versions-path* "/datomic-free-" version)))
 
 (def cli-options
   [["-h" "--help" "Show help" :default false :flag true]])

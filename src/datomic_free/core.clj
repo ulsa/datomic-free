@@ -173,5 +173,5 @@
       "use"
       (if-let [version (second arguments)]
         (use-datomic version)
-        (println "No version given"))
+        (use-datomic (get-latest-datomic-version)))
       (exit 1 (usage summary)))))

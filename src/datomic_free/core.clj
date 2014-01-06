@@ -122,8 +122,14 @@
 (defn usage [options-summary]
   (->> ["Utility for downloading, upgrading and starting Datomic Free."
         ""
-        "Usage: lein run -- [options] <start|update|use> [version]"
-        "Usage: java -jar datomic-free-<version>-standalone.jar [options] [start|update|use]"
+        "Usage: lein run -- [options] <start|update|use> [arg]"
+        "   or: java -jar datomic-free-<version>-standalone.jar [options] <start|update|use> [arg]"
+        ""
+        "where 'arg' depends on the command:"
+        ""
+        " - start [config]"
+        " - update [version]"
+        " - use [version]"
         ""
         "Options:"
         options-summary

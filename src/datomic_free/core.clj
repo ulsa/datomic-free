@@ -27,6 +27,12 @@
 (defn path-to-version [version]
   (str *versions-path* "/datomic-free-" version))
 
+(defn make-transactor-executable [version]
+  (println "Making datomic executable")
+  (let [executables ["bin/transactor" "bin/classpath" "bin/maven-install"]
+        make-executable #(fs/chmod "+x" (str (path-to-version version) "/" %))]
+    (map make-executable executables)))
+
 (defn download-datomic [version]
   (let [path (path-to-version version)]
     (if (fs/exists? path)
@@ -70,12 +76,6 @@
 (defn use-datomic [version]
   (fs/delete *active-path*)
   (symlink *active-path* (str *versions-path* "/datomic-free-" version)))
-
-(defn make-transactor-executable [version]
-  (println "Making datomic executable")
-  (let [executables ["bin/transactor" "bin/classpath" "bin/maven-install"]
-        make-executable #(fs/chmod "+x" (str (path-to-version version) "/" %))]
-    (map make-executable executables)))
 
 (defn start-transactor
   ([] (start-transactor (str *active-path* "/config/samples/free-transactor-template.properties")))

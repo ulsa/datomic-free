@@ -5,6 +5,7 @@
             [clj-http.client :as client]
             [clojure.java.io :refer [copy file]]
             [clojure.string :as string]
+            [clojure.java.shell :refer [sh]]
             [clojure.tools.cli :refer [parse-opts]])
   (:import [java.nio.file Files Paths Path]
            [java.nio.file.attribute FileAttribute])
@@ -23,8 +24,11 @@
 (defn get-latest-datomic-version []
   (-> (fetch-url) (html/select [:a.latest]) first :attrs :href (string/split #"/") last))
 
+(defn path-to-version [version]
+  (str *versions-path* "/datomic-free-" version))
+
 (defn download-datomic [version]
-  (let [path (str *versions-path* "/datomic-free-" version)]
+  (let [path (path-to-version version)]
     (if (fs/exists? path)
       (println (format "Datomic Free %s is already present." version))
       (do
@@ -64,6 +68,17 @@
 (defn use-datomic [version]
   (fs/delete *active-path*)
   (symlink *active-path* (str *versions-path* "/datomic-free-" version)))
+
+(defn make-transactor-executable [version]
+  (let [executables ["bin/transactor" "bin/classpath"]
+        make-executable #(fs/chmod "+x" (str (path-to-version version) "/" %))]
+    (map make-executable executables)))
+
+(defn start-transactor
+  ([] (start-transactor (str *active-path* "/config/samples/free-transactor-template.properties")))
+  ([config]
+   (let [executable (str *active-path* "/bin/transactor")]
+     (sh "cd" *active-path* "&&" "bin/transactor" config))))
 
 (def cli-options
   [["-h" "--help" "Show help" :default false :flag true]])
@@ -105,8 +120,8 @@
           (println "datomic-free has not been activated yet. datomicizing...")
           (fs/mkdirs *home-path*)
           (download-latest-datomic))
-        ;; TODO start transactor here
-        )
+        ;; TODO: add support for specific config
+        (start-transactor))
       "update"
       (if-let [version (second arguments)]
         (download-datomic version)

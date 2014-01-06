@@ -3,7 +3,7 @@
             [me.raynes.fs :as fs]
             [me.raynes.fs.compression :refer [unzip]]
             [clj-http.client :as client]
-            [clojure.java.io :refer [copy file]]
+            [clojure.java.io :as io]
             [clojure.string :as string]
             [clojure.java.shell :refer [sh]]
             [clojure.tools.cli :refer [parse-opts]]
@@ -44,27 +44,25 @@
 
 (defn- copy-stream-to-file [stream zip-file]
   (with-open [i stream]
-    (copy i (file (str *versions-path* "/" zip-file)))))
+    (io/copy i (io/file (str *versions-path* "/" zip-file)))))
 
 (defn- unzip-and-delete [zip-file]
   (fs/with-cwd *versions-path*
     (unzip zip-file ".")
     (fs/delete zip-file)))
 
-;; TODO make everything in bin executable recursively, using fs/walk and fs/chmod
 (defn- make-transactor-executable [version]
   (println "Making datomic executable")
-  (doseq [executable ["bin/transactor" "bin/classpath" "bin/maven-install"]
-          :let [path (str (path-for-version version) "/" executable)]]
-    (when (fs/exists? path)
-      (fs/chmod "+x" path))))
+  (fs/walk
+   (fn [parent _ files] (doseq [file files] (fs/chmod "+x" (io/file parent file))))
+   (str (path-for-version version) "/bin")))
 
 (defn- install-maven-artifacts [version]
   (try
     (sh "mvn" "-v")
     (println (format "Installing datomic-free-%s in local maven repository..." version))
     (try
-      (let [p (sh "bin/maven-install" :dir (str *versions-path* "/" version))
+      (let [p (sh "bin/maven-install" :dir (path-for-version version))
             status (:exit p)]
         (when-not (zero? status)
           (println (:err p))))
@@ -75,7 +73,7 @@
 
 (defn use-datomic [version]
   (fs/delete *active-path*)
-  (symlink *active-path* (str *versions-path* "/datomic-free-" version)))
+  (symlink *active-path* (path-for-version version)))
 
 (defn update-data-dir [version]
   ;; TODO do stuff here

@@ -78,7 +78,7 @@
   ([] (start-transactor (str *active-path* "/config/samples/free-transactor-template.properties")))
   ([config]
    (let [executable (str *active-path* "/bin/transactor")]
-     (sh "cd" *active-path* "&&" "bin/transactor" config))))
+     (sh executable config))))
 
 (def cli-options
   [["-h" "--help" "Show help" :default false :flag true]])

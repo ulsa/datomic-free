@@ -62,7 +62,7 @@
 (defn usage [options-summary]
   (->> ["Utility for downloading, upgrading and starting Datomic Free."
         ""
-        "Usage: lein run -- [options] [start|update|use]"
+        "Usage: lein run -- [options] <start|update|use> [version]"
         "Usage: java -jar datomic-free-<version>-standalone.jar [options] [start|update|use]"
         ""
         "Options:"
@@ -80,17 +80,30 @@
   (System/exit status))
 
 (defn -main
-  "I don't do a whole lot ... yet."
   [& args]
   (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
     ;; Handle help and error conditions
     (cond
      (:help options) (exit 0 (usage summary))
-     (not= (count arguments) 1) (exit 1 (usage summary))
+     (let [n (count arguments)]
+       (or (> n 2) (< n 1))) (exit 1 (usage summary))
      errors (exit 1 (error-msg errors)))
     ;; Execute program with options
     (case (first arguments)
-      "start" (println "start" options)
-      "update" (println "update" options)
-      "use" (println "use" options)
+      "start"
+      (do
+        (when-not (fs/exists? *active-path*)
+          (println "datomic-free has not been activated yet. datomicizing...")
+          (fs/mkdirs *home-path*)
+          (download-latest-datomic))
+        ;; TODO start transactor here
+        )
+      "update"
+      (if-let [version (second arguments)]
+        (download-datomic version)
+        (download-latest-datomic))
+      "use"
+      (if-let [version (second arguments)]
+        (use-datomic version)
+        (println "No version given"))
       (exit 1 (usage summary)))))

@@ -29,9 +29,8 @@
 
 (defn make-transactor-executable [version]
   (println "Making datomic executable")
-  (let [executables ["bin/transactor" "bin/classpath" "bin/maven-install"]
-        make-executable #(fs/chmod "+x" (str (path-to-version version) "/" %))]
-    (map make-executable executables)))
+  (doseq [executable ["bin/transactor" "bin/classpath" "bin/maven-install"]]
+    (fs/chmod "+x" (str (path-to-version version) "/" executable))))
 
 (defn download-datomic [version]
   (let [path (path-to-version version)]

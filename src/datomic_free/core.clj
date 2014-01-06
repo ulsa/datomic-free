@@ -41,25 +41,27 @@
     (unzip zip-file ".")
     (fs/delete zip-file)))
 
-(defn- make-transactor-executable [version]
+(defn- make-files-executable [version]
   (println "Making datomic executable")
   (fs/walk
    (fn [parent _ files] (doseq [file files] (fs/chmod "+x" (io/file parent file))))
    (str (path-for-version version) "/bin")))
 
 (defn- install-maven-artifacts [version]
-  (try
-    (sh "mvn" "-v")
-    (println (format "Installing datomic-free-%s in local maven repository..." version))
-    (try
-      (let [p (sh "bin/maven-install" :dir (path-for-version version))
-            status (:exit p)]
-        (when-not (zero? status)
-          (println (:err p))))
-      (catch Exception e
-        (println "Problem running Datomic script 'bin/maven-install':") (print-throwable e)))
-    (catch IOException e
-      (println "No 'mvn' command available, skipping install in local maven repository"))))
+  (let [script "bin/maven-install"]
+    (when (fs/exists? (str (path-for-version version) "/" script))
+      (try
+        (sh "mvn" "-v")                 ;throws exception if not available
+        (println (format "Installing datomic-free-%s in local maven repository..." version))
+        (try
+          (let [p (sh script :dir (path-for-version version))
+                status (:exit p)]
+            (when-not (zero? status)
+              (println (:err p))))
+          (catch Exception e
+            (println "Problem running Datomic script 'bin/maven-install':") (print-throwable e)))
+        (catch IOException e
+          (println "No 'mvn' command available, skipping install in local maven repository"))))))
 
 (defn- update-data-dir [version]
   (let [version-data-path (str (path-for-version version) "/data")]
@@ -91,7 +93,7 @@
             (do
               (copy-stream-to-file (:body response) zip-file)
               (unzip-and-delete zip-file)
-              (make-transactor-executable version)
+              (make-files-executable version)
               (install-maven-artifacts version)
               (use-datomic version))
             (println version "is not a valid version. See https://my.datomic.com/downloads/free for a list of versions.")))))))

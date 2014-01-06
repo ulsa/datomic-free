@@ -33,6 +33,7 @@
       (println (format "Datomic Free %s is already present." version))
       (do
         (fs/mkdirs *versions-path*)
+        (printf "Downloading Datomic Free %s...\n" version)
         (let [url (str *base-url* "/downloads/free/" version)
               response (client/get url {:as :stream})
               zip-file "datomic-free.zip"]
@@ -42,7 +43,8 @@
                 (copy i (file (str *versions-path* "/" zip-file))))
               (fs/with-cwd *versions-path*
                 (unzip zip-file ".")
-                (fs/delete zip-file)))
+                (fs/delete zip-file))
+              (make-transactor-executable version))
             (println version "is not a valid version. See https://my.datomic.com/downloads/free for a list of versions.")))))))
 
 (defn download-latest-datomic []
@@ -70,7 +72,8 @@
   (symlink *active-path* (str *versions-path* "/datomic-free-" version)))
 
 (defn make-transactor-executable [version]
-  (let [executables ["bin/transactor" "bin/classpath"]
+  (println "Making datomic executable")
+  (let [executables ["bin/transactor" "bin/classpath" "bin/maven-install"]
         make-executable #(fs/chmod "+x" (str (path-to-version version) "/" %))]
     (map make-executable executables)))
 

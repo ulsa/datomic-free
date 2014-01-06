@@ -76,8 +76,11 @@
   (symlink *active-path* (path-for-version version)))
 
 (defn update-data-dir [version]
-  ;; TODO do stuff here
-  )
+  (let [version-data-path (str (path-for-version version) "/data")]
+    (when (fs/exists? version-data-path)
+      (fs/delete-dir version-data-path))
+    (fs/mkdirs *data-path*)
+    (symlink version-data-path *data-path*)))
 
 (defn download-datomic [version]
   (let [path (path-for-version version)]

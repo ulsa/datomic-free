@@ -43,9 +43,10 @@
 
 (defn- make-files-executable [version]
   (println "Making datomic executable")
-  (fs/walk
-   (fn [parent _ files] (doseq [file files] (fs/chmod "+x" (io/file parent file))))
-   (str (path-for-version version) "/bin")))
+  (dorun
+   (fs/walk
+    (fn [parent _ files] (doseq [file files] (fs/chmod "+x" (io/file parent file))))
+    (str (path-for-version version) "/bin"))))
 
 (defn- install-maven-artifacts [version]
   (let [script "bin/maven-install"]

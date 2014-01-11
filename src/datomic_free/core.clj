@@ -26,8 +26,8 @@
 (defn get-latest-datomic-version []
   (-> (fetch-url) (html/select [:a.latest]) first :attrs :href (string/split #"/") last))
 
-(defn path-for-version [version]
-  (str *versions-path* "/datomic-free-" version))
+{defn path-for-version [version]
+  (str *versions-path* "/datomic-free-" version)}
 
 (defn- sym-link-target [link]
   (-> link (fs/file) (.toPath) (Files/readSymbolicLink)))
@@ -159,7 +159,6 @@
           (println "datomic-free has not been activated yet. datomicizing...")
           (fs/mkdirs *home-path*)
           (download-latest-datomic))
-        ;; TODO: add support for specific config
         (if-let [config (second arguments)]
           (start-transactor config)
           (start-transactor)))
@@ -172,3 +171,5 @@
         (use-datomic version)
         (use-datomic (get-latest-datomic-version)))
       (exit 1 (usage summary)))))
+
+(defn test [] ((hello (world abc) 123)))

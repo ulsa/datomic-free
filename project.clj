@@ -10,4 +10,7 @@
                  [org.clojure/tools.cli "0.3.1"]]
   :main ^:skip-aot datomic-free.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}
+             :dev {:plugins [[lein-midje "3.1.1"]]
+                   :dependencies [[midje "1.5.1"]
+                                  [clj-http-fake "0.7.8"]]}})

@@ -21,7 +21,7 @@
 (def ^:dynamic *data-path* (str *home-path* "/data"))
 
 (defn- fetch-url []
-  (html/html-resource (java.net.URI. (str *base-url* "/downloads/free"))))
+  (-> (client/get (str *base-url* "/downloads/free")) :body java.io.StringReader. html/html-resource))
 
 (defn get-latest-datomic-version []
   (-> (fetch-url) (html/select [:a.latest]) first :attrs :href (string/split #"/") last))
@@ -171,5 +171,3 @@
         (use-datomic version)
         (use-datomic (get-latest-datomic-version)))
       (exit 1 (usage summary)))))
-
-(defn test [] ((hello (world abc) 123)))

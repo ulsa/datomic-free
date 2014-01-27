@@ -26,8 +26,8 @@
 (defn get-latest-datomic-version []
   (-> (fetch-url) (html/select [:a.latest]) first :attrs :href (string/split #"/") last))
 
-{defn path-for-version [version]
-  (str *versions-path* "/datomic-free-" version)}
+(defn path-for-version [version]
+  (str *versions-path* "/datomic-free-" version))
 
 (defn- sym-link-target [link]
   (-> link (fs/file) (.toPath) (Files/readSymbolicLink)))
